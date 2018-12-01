@@ -10,4 +10,6 @@ The GIT-repository contains following directories:
 - src - full sources of the Hermes library (Windows and Linux)
 - test - a test application for the Hermes library (currently only for Windows)
 
+- The linux build works now- Both the src as well as the unit test suite.
+
 
