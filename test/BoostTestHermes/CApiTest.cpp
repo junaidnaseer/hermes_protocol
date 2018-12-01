@@ -28,6 +28,11 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include <boost/uuid/uuid.hpp>            // uuid class
+#include <boost/uuid/uuid_generators.hpp> // generators
+#include <boost/uuid/uuid_io.hpp>         // streaming operators etc.
+#include <boost/lexical_cast.hpp>
+
 // some infrastructure to aid testing:
 namespace
 {
@@ -104,12 +109,12 @@ namespace
         std::cout << in_name << '#' << sessionId << '(';
         switch (type)
         {
-        case eHERMES_TRACE_SENT: std::cout << "Sent: "; break;
-        case eHERMES_TRACE_RECEIVED: std::cout << "Received: "; break;
-        case eHERMES_TRACE_DEBUG: std::cout << "Debug: "; break;
-        case eHERMES_TRACE_INFO: std::cout << "Info: "; break;
-        case eHERMES_TRACE_WARNING: std::cout << "Warning: "; break;
-        case eHERMES_TRACE_ERROR: std::cout << "Error: "; break;
+        case eHERMES_TRACE_TYPE_SENT: std::cout << "Sent: "; break;
+        case eHERMES_TRACE_TYPE_RECEIVED: std::cout << "Received: "; break;
+        case eHERMES_TRACE_TYPE_DEBUG: std::cout << "Debug: "; break;
+        case eHERMES_TRACE_TYPE_INFO: std::cout << "Info: "; break;
+        case eHERMES_TRACE_TYPE_WARNING: std::cout << "Warning: "; break;
+        case eHERMES_TRACE_TYPE_ERROR: std::cout << "Error: "; break;
         default: std::cout << "Unknown: ";
         }
         std::cout.write(trace.m_pData, trace.m_size);
@@ -127,19 +132,19 @@ class DownstreamProxy
 public:
 
     DownstreamProxy(unsigned laneId) :
-        m_laneId(laneId),
+    	m_bottomBarcode("ABCDEF"),
+		m_width(210.0),
+		m_configuration(),
+		m_laneId(laneId),
         m_pHermes(0),
-        m_threadHandle(0), 
-        m_state(eHERMES_NOT_CONNECTED), 
+        m_threadHandle(0),
         m_sessionId(0U),
-        m_bottomBarcode("ABCDEF"),
-        m_width(210.0),
-        m_configuration()
+        m_state(eHERMES_STATE_NOT_CONNECTED)
     {
         m_configuration.m_downstreamLaneId = m_laneId;
         HermesDownstreamCallbacks callbacks = {
             {&DownstreamProxy::OnConnected_, this},
-            {&DownstreamProxy::OnServiceDescription_, this},
+			{0, 0}, // {&DownstreamProxy::OnServiceDescriptionData_, this},
             {&DownstreamProxy::OnMachineReady_, this},
             {0, 0}, // OnRevokeMachineReady
             {&DownstreamProxy::OnStartTransport_, this},
@@ -148,7 +153,7 @@ public:
             {0, 0}, // OnState
             {0, 0}, // OnCheckAlive
             {0, 0}, // OnDisconnected
-            {&DownstreamProxy::OnTrace_, this}
+			{0, 0}, // {&DownstreamProxy::OnTrace_, this}
         };
 
         m_pHermes = ::CreateHermesDownstream(1U, &callbacks);
@@ -175,7 +180,7 @@ public:
         m_optionalClientAddress = optionalClientAddress;
         m_configuration.m_optionalClientAddress.m_pData = m_optionalClientAddress.data();
         m_configuration.m_optionalClientAddress.m_size = static_cast<uint32_t>(m_optionalClientAddress.size());
-        m_machineId = m_machineId;
+        m_machineId = machineId;
 
         if (port) // enabled
         {
@@ -186,7 +191,8 @@ public:
                 m_configuration.m_port,
                 cCHECK_ALIVE_PERIOD,
                 cRECONNECT_TIMEOUT,
-                eHERMES_CHECK_SEND_AND_RECEIVE
+				eHERMES_CHECK_ALIVE_RESPONSE_MODE_AUTO,
+                eHERMES_CHECK_STATE_SEND_AND_RECEIVE
             };
             ::EnableHermesDownstream(m_pHermes, &settings);
         }
@@ -195,8 +201,8 @@ public:
             const char* cTEXT = "Connection was disabled";
             HermesNotificationData notification =
             {
-                eHERMES_CONNECTION_RESET_BECAUSE_OF_CHANGED_CONFIGURATION,
-                eHERMES_INFO,
+                eHERMES_NOTIFICATION_CODE_CONNECTION_RESET_BECAUSE_OF_CHANGED_CONFIGURATION,
+                eHERMES_SEVERITY_INFO,
                 {cTEXT, static_cast<uint32_t>(::strlen(cTEXT))}
             };
             ::DisableHermesDownstream(m_pHermes, &notification);
@@ -276,14 +282,14 @@ private:
         pThis->m_state = state;
     }
 
-    static void OnServiceDescription_(void* pVoid, unsigned sessionId, EHermesState state, const HermesServiceDescription*)
+    static void OnServiceDescription_(void* pVoid, unsigned sessionId, EHermesState state, const HermesServiceDescriptionData*)
     {
         DownstreamProxy* pThis = static_cast<DownstreamProxy*>(pVoid);
         if (pThis->m_sessionId != sessionId)
             return;
 
         pThis->m_state = state;
-        HermesServiceDescription serviceDescription = 
+        HermesServiceDescriptionData serviceDescription =
         {
             {pThis->m_machineId.data(), static_cast<uint32_t>(pThis->m_machineId.size())},
             pThis->m_laneId,
@@ -300,20 +306,17 @@ private:
 
         pThis->m_state = state;
 
-        GUID guid;
-        ::UuidCreateSequential(&guid);
-        RPC_CSTR guidString;
-        ::UuidToStringA(&guid, &guidString);
-        pThis->m_boardId = reinterpret_cast<const char*>(guidString);
-        ::RpcStringFreeA(&guidString);
+        boost::uuids::uuid uuid = boost::uuids::random_generator()();
+        const std::string guidString = boost::lexical_cast<std::string>(uuid);
+        pThis->m_boardId = guidString.c_str();
 
         HermesBoardAvailableData boardAvailableData =
         {
             {pThis->m_boardId.data(), static_cast<uint32_t>(pThis->m_boardId.size())},
             {pThis->m_machineId.data(), static_cast<uint32_t>(pThis->m_machineId.size())},
-            eHERMES_GOOD_BOARD_QUALITY,
+            eHERMES_BOARD_QUALITY_GOOD,
             {0, 0},
-            eHERMES_BOARD_TOP_SIDE_IS_UP,
+            eHERMES_FLIPPED_BOARD_TOP_SIDE_IS_UP,
             {0, 0},
             {pThis->m_bottomBarcode.data(), static_cast<uint32_t>(pThis->m_bottomBarcode.size())},
             0,
@@ -335,7 +338,7 @@ private:
 
         HermesTransportFinishedData transportFinishedData =
         {
-            eHERMES_TRANSFER_COMPLETE,
+            eHERMES_TRANSFER_STATE_COMPLETE,
             data->m_boardId,
         };
         ::SignalHermesTransportFinished(pThis->m_pHermes, pThis->m_sessionId, &transportFinishedData);
@@ -352,7 +355,7 @@ private:
         CHECK_EQUAL(pThis->m_boardId.compare(0U, std::string::npos, data->m_boardId.m_pData, data->m_boardId.m_size), 0);
 
         // finished:
-        ::SetEvent(pThis->m_completedEventHandle);
+        pthread_cond_signal(&pThis->m_completedEventHandle); // ::SetEvent(pThis->m_completedEventHandle);
     }
 
     static void OnTrace_(void*, unsigned sessionId, EHermesTraceType type, const HermesStringView trace)
@@ -371,13 +374,13 @@ class UpstreamProxy
 public:
 
     UpstreamProxy(unsigned laneId) :
+        m_width(0.0),
+		m_configuration(),
         m_laneId(laneId),
         m_pHermes(0),
         m_threadHandle(0),
-        m_state(eHERMES_NOT_CONNECTED),
         m_sessionId(0U),
-        m_width(0.0),
-        m_configuration()
+		m_state(eHERMES_STATE_NOT_CONNECTED)
     {
         m_configuration.m_upstreamLaneId = m_laneId;
 
@@ -391,16 +394,17 @@ public:
             {0, 0}, // OnState
             {0, 0}, // OnCheckAlive
             {0, 0}, // OnDisconnected
-            {&UpstreamProxy::OnTrace_, this}
+			{0, 0}, // {&UpstreamProxy::OnTrace_, this}
         };
 
         m_pHermes = ::CreateHermesUpstream(1U, &callbacks);
-
-        m_completedEventHandle = ::CreateEvent(NULL, TRUE, FALSE, 0);
 #ifdef _WINDOWS
+        m_completedEventHandle = ::CreateEvent(NULL, TRUE, FALSE, 0);
         m_threadHandle = ::CreateThread(0, 0, &UpstreamProxy::Run_, this, 0, 0);
 #else
-        pthread_create(m_threadHandle, NULL, &UpstreamProxy::Run_, this);
+        pthread_mutex_init(&m_completedEventHandleMutex,NULL);
+        pthread_cond_init(&m_completedEventHandle,NULL);
+        pthread_create(&m_threadHandle, NULL, &UpstreamProxy::Run_, this);
 #endif
     }
 
@@ -417,7 +421,7 @@ public:
         m_serverAddress = serverAddress;
         m_configuration.m_hostAddress.m_pData = m_serverAddress.data();
         m_configuration.m_hostAddress.m_size = static_cast<uint32_t>(m_serverAddress.size());
-        m_machineId = m_machineId;
+        m_machineId = machineId;
 
         if (port) // enabled
         {
@@ -428,7 +432,8 @@ public:
                 m_configuration.m_port,
                 cCHECK_ALIVE_PERIOD,
                 cRECONNECT_TIMEOUT,
-                eHERMES_CHECK_SEND_AND_RECEIVE
+				eHERMES_CHECK_ALIVE_RESPONSE_MODE_AUTO,
+                eHERMES_CHECK_STATE_SEND_AND_RECEIVE
             };
             ::EnableHermesUpstream(m_pHermes, &settings);
         }
@@ -437,8 +442,8 @@ public:
             const char* cTEXT = "Connection was disabled";
             HermesNotificationData notification =
             {
-                eHERMES_CONNECTION_RESET_BECAUSE_OF_CHANGED_CONFIGURATION,
-                eHERMES_INFO,
+                eHERMES_NOTIFICATION_CODE_CONNECTION_RESET_BECAUSE_OF_CHANGED_CONFIGURATION,
+                eHERMES_SEVERITY_INFO,
                 {cTEXT, static_cast<uint32_t>(::strlen(cTEXT))}
             };
             ::DisableHermesUpstream(m_pHermes, &notification);
@@ -447,7 +452,11 @@ public:
 
     void WaitForCompletion()
     {
+#ifdef _WINDOWS
         ::WaitForSingleObject(m_completedEventHandle, INFINITE);
+#else
+        pthread_cond_wait(&m_completedEventHandle, &m_completedEventHandleMutex);
+#endif
     }
 
     void JoinThread()
@@ -455,7 +464,11 @@ public:
         if (!m_threadHandle)
             return;
         ::StopHermesUpstream(m_pHermes);
+#ifdef _WINDOWS
         ::WaitForSingleObject(m_threadHandle, INFINITE);
+#else
+        pthread_join(m_threadHandle, NULL);
+#endif
         m_threadHandle = 0;
     }
 
@@ -476,16 +489,25 @@ private:
     unsigned m_laneId;
     HermesUpstream* m_pHermes;
     std::string m_serverAddress; // this is the actual storage behind m_configuration.m_hostAddress!
+
+
 #ifdef _WINDOWS
     HANDLE m_threadHandle;
+    HANDLE m_completedEventHandle;
 #else
     pthread_t m_threadHandle;
+    pthread_mutex_t m_completedEventHandleMutex;
+    pthread_cond_t m_completedEventHandle;
 #endif
     unsigned m_sessionId;
     EHermesState m_state;
-    HANDLE m_completedEventHandle;
 
-    static DWORD WINAPI Run_(void* pVoid)
+
+#ifdef _WINDOWS
+        static DWORD WINAPI Run_(void* pVoid)
+#else
+        static void *Run_(void* pVoid)
+#endif
     {
         UpstreamProxy* pThis = static_cast<UpstreamProxy*>(pVoid);
         ::RunHermesUpstream(pThis->m_pHermes);
@@ -498,7 +520,7 @@ private:
         pThis->m_sessionId = sessionId;
         pThis->m_state = state;
 
-        HermesServiceDescription serviceDescription =
+        HermesServiceDescriptionData serviceDescription =
         {
             {pThis->m_machineId.data(), static_cast<uint32_t>(pThis->m_machineId.size())},
             pThis->m_laneId,
@@ -507,7 +529,7 @@ private:
         ::SignalHermesUpstreamServiceDescription(pThis->m_pHermes, pThis->m_sessionId, &serviceDescription);
     }
 
-    static void OnServiceDescription_(void* pVoid, unsigned sessionId, EHermesState state, const HermesServiceDescription*)
+    static void OnServiceDescription_(void* pVoid, unsigned sessionId, EHermesState state, const HermesServiceDescriptionData*)
     {
         UpstreamProxy* pThis = static_cast<UpstreamProxy*>(pVoid);
         if (pThis->m_sessionId != sessionId)
@@ -515,7 +537,7 @@ private:
 
         pThis->m_state = state;
 
-        HermesMachineReadyData machineReadyData = {eHERMES_ANY_BOARD_QUALITY};
+        HermesMachineReadyData machineReadyData = {eHERMES_BOARD_QUALITY_ANY};
         ::SignalHermesMachineReady(pThis->m_pHermes, pThis->m_sessionId, &machineReadyData);
     }
 
@@ -549,13 +571,13 @@ private:
 
         HermesStopTransportData stopTransportData =
         {
-            eHERMES_TRANSFER_COMPLETE,
+            eHERMES_TRANSFER_STATE_COMPLETE,
             data->m_boardId
         };
         ::SignalHermesStopTransport(pThis->m_pHermes, pThis->m_sessionId, &stopTransportData);
 
         // finished
-        ::SetEvent(pThis->m_completedEventHandle);
+        pthread_cond_signal(&pThis->m_completedEventHandle); // ::SetEvent(pThis->m_completedEventHandle);
     }
 
     static void OnTrace_(void*, unsigned sessionId, EHermesTraceType type, const HermesStringView trace)
@@ -588,7 +610,7 @@ public:
 #ifdef _WINDOWS
         m_threadHandle = ::CreateThread(0, 0, &ConfigurationProxy::Run_, this, 0, 0);
 #else
-        pthread_create(m_threadHandle, NULL, &ConfigurationProxy::Run_, this);
+        pthread_create(&m_threadHandle, NULL, &ConfigurationProxy::Run_, this);
 #endif
 
         HermesConfigurationServiceSettings settings = {0, 10U};
@@ -620,7 +642,11 @@ public:
             return;
 
         ::StopHermesConfigurationService(m_pHermes);
+#ifdef _WINDOWS
         ::WaitForSingleObject(m_threadHandle, INFINITE);
+#else
+        pthread_join(m_threadHandle, NULL);
+#endif
         m_threadHandle = 0;
     }
 
@@ -646,8 +672,11 @@ private:
 
     std::string m_machineId;
 
-
-    static DWORD WINAPI Run_(void* pVoid)
+#ifdef _WINDOWS
+        static DWORD WINAPI Run_(void* pVoid)
+#else
+        static void *Run_(void* pVoid)
+#endif
     {
         ConfigurationProxy* pThis = static_cast<ConfigurationProxy*>(pVoid);
         ::RunHermesConfigurationService(pThis->m_pHermes);
@@ -666,22 +695,22 @@ private:
 
         ConfigurationProxy* pThis = static_cast<ConfigurationProxy*>(pVoid);
         HermesCurrentConfigurationData data = {{pThis->m_machineId.data(), static_cast<uint32_t>(pThis->m_machineId.size())}};
-        data.m_downstreamConfigurations = downstreamConfigurations;
-        data.m_upstreamConfigurations = upstreamConfigurations;
+        data.m_downstreamConfigurations.m_pData = downstreamConfigurations;
+        data.m_upstreamConfigurations.m_pData = upstreamConfigurations;
 
         for (unsigned laneId = 1; laneId <= cMAX_LANE_COUNT; ++laneId)
         {
             UpstreamProxy& upstreamProxy = *pThis->GetUpstreamProxy(laneId);
             if (upstreamProxy.m_configuration.m_port)
             {
-                upstreamConfigurations[data.m_upstreamConfigurationCount] = &upstreamProxy.m_configuration;
-                ++data.m_upstreamConfigurationCount;
+                upstreamConfigurations[data.m_upstreamConfigurations.m_size] = &upstreamProxy.m_configuration;
+                ++data.m_upstreamConfigurations.m_size;
             }
             DownstreamProxy& downstreamProxy = *pThis->GetDownstreamProxy(laneId);
             if (downstreamProxy.m_configuration.m_port)
             {
-                downstreamConfigurations[data.m_downstreamConfigurationCount] = &downstreamProxy.m_configuration;
-                ++data.m_downstreamConfigurationCount;
+                downstreamConfigurations[data.m_downstreamConfigurations.m_size] = &downstreamProxy.m_configuration;
+                ++data.m_downstreamConfigurations.m_size;
             }
         }
         ::SignalHermesCurrentConfiguration(pThis->m_pHermes, sessionId, &data);
@@ -696,16 +725,16 @@ private:
         ConfigurationProxy* pThis = static_cast<ConfigurationProxy*>(pVoid);
         pThis->m_machineId.assign(pData->m_machineId.m_pData, pData->m_machineId.m_size);
 
-        for (unsigned i = 0U; i < pData->m_upstreamConfigurationCount; ++i)
+        for (unsigned i = 0U; i < pData->m_upstreamConfigurations.m_size; ++i)
         {
-            const HermesUpstreamConfiguration* pConfig = pData->m_upstreamConfigurations[i];
+            const HermesUpstreamConfiguration* pConfig = pData->m_upstreamConfigurations.m_pData[i];
             UpstreamProxy* pProxy = pThis->GetUpstreamProxy(pConfig->m_upstreamLaneId);
             if (!pProxy)
             {
                 HermesNotificationData notification = 
                 {
-                    eHERMES_CONFIGURATION_ERROR,
-                    eHERMES_INFO,
+                    eHERMES_NOTIFICATION_CODE_CONFIGURATION_ERROR,
+                    eHERMES_SEVERITY_INFO,
                     {cINVALID_LANE, static_cast<uint32_t>(::strlen(cINVALID_LANE))}
                 };
                 ::SignalHermesConfigurationNotification(pThis->m_pHermes, sessionId, &notification);
@@ -715,16 +744,16 @@ private:
             upstreamConfigs[pConfig->m_upstreamLaneId - 1U].m_port = pConfig->m_port;
         }
 
-        for (unsigned i = 0U; i < pData->m_downstreamConfigurationCount; ++i)
+        for (unsigned i = 0U; i < pData->m_downstreamConfigurations.m_size; ++i)
         {
-            const HermesDownstreamConfiguration* pConfig = pData->m_downstreamConfigurations[i];
+            const HermesDownstreamConfiguration* pConfig = pData->m_downstreamConfigurations.m_pData[i];
             DownstreamProxy* pProxy = pThis->GetDownstreamProxy(pConfig->m_downstreamLaneId);
             if (!pProxy)
             {
                 HermesNotificationData notification =
                 {
-                    eHERMES_CONFIGURATION_ERROR,
-                    eHERMES_INFO,
+                	eHERMES_NOTIFICATION_CODE_CONFIGURATION_ERROR,
+					eHERMES_SEVERITY_INFO,
                     {cINVALID_LANE, static_cast<uint32_t>(::strlen(cINVALID_LANE))}
                 };
                 ::SignalHermesConfigurationNotification(pThis->m_pHermes, sessionId, &notification);
@@ -803,12 +832,14 @@ public:
         std::size_t upstreamCount = configuration.m_upstreamConfigurations.size();
         std::vector<HermesUpstreamConfiguration> upstreamConfigs(upstreamCount);
         std::vector<const HermesUpstreamConfiguration*> upstreamPointers(upstreamCount);
-        data.m_upstreamConfigurationCount = static_cast<uint32_t>(upstreamCount);
-        data.m_upstreamConfigurations = upstreamPointers.data();
+        data.m_upstreamConfigurations.m_size = static_cast<uint32_t>(upstreamCount);
+        data.m_upstreamConfigurations.m_pData = upstreamPointers.data();
         for (std::size_t i = 0U; i < upstreamCount; ++i)
         {
             const LaneConfiguration& myConfig = configuration.m_upstreamConfigurations[i];
-            HermesUpstreamConfiguration upstreamConfig = {myConfig.m_laneId, 
+            HermesUpstreamConfiguration upstreamConfig = {
+            		myConfig.m_laneId,
+					{0, 0},
                 {myConfig.m_ipAddress.data(), static_cast<uint32_t>(myConfig.m_ipAddress.size())}, 
                 myConfig.m_port
             };
@@ -819,12 +850,12 @@ public:
         std::size_t downstreamCount = configuration.m_downstreamConfigurations.size();
         std::vector<HermesDownstreamConfiguration> downstreamConfigs(downstreamCount);
         std::vector<const HermesDownstreamConfiguration*> downstreamPointers(downstreamCount);
-        data.m_downstreamConfigurationCount = static_cast<uint32_t>(downstreamCount);
-        data.m_downstreamConfigurations = downstreamPointers.data();
+        data.m_downstreamConfigurations.m_size = static_cast<uint32_t>(downstreamCount);
+        data.m_downstreamConfigurations.m_pData = downstreamPointers.data();
         for (std::size_t i = 0U; i < downstreamCount; ++i)
         {
             const LaneConfiguration& myConfig = configuration.m_downstreamConfigurations[i];
-            HermesDownstreamConfiguration downstreamConfig = {myConfig.m_laneId, {0, 0}, myConfig.m_port};
+            HermesDownstreamConfiguration downstreamConfig = {myConfig.m_laneId, {0, 0}, {0, 0}, myConfig.m_port};
             if (!myConfig.m_ipAddress.empty())
             {
                 downstreamConfig.m_optionalClientAddress.m_pData = myConfig.m_ipAddress.data();
@@ -860,9 +891,9 @@ private:
         pConfiguration->m_machineId.assign(pData->m_optionalMachineId.m_pData, pData->m_optionalMachineId.m_size);
         pConfiguration->m_upstreamConfigurations.clear();
         pConfiguration->m_downstreamConfigurations.clear();
-        for (unsigned i = 0; i < pData->m_downstreamConfigurationCount; ++i)
+        for (unsigned i = 0U; i < pData->m_downstreamConfigurations.m_size; ++i)
         {
-            const HermesDownstreamConfiguration* pConfig = pData->m_downstreamConfigurations[i];
+            const HermesDownstreamConfiguration* pConfig = pData->m_downstreamConfigurations.m_pData[i];
             LaneConfiguration laneConfig =
             {
                 pConfig->m_downstreamLaneId,
@@ -871,9 +902,9 @@ private:
             };
             pConfiguration->m_downstreamConfigurations.push_back(laneConfig);
         }
-        for (unsigned i = 0; i < pData->m_upstreamConfigurationCount; ++i)
+        for (unsigned i = 0U; i < pData->m_upstreamConfigurations.m_size; ++i)
         {
-            const HermesUpstreamConfiguration* pConfig = pData->m_upstreamConfigurations[i];
+            const HermesUpstreamConfiguration* pConfig = pData->m_upstreamConfigurations.m_pData[i];
             LaneConfiguration laneConfig =
             {
                 pConfig->m_upstreamLaneId,
@@ -908,7 +939,7 @@ int main()
     currentConfiguration.m_machineId = "MyMachineId";
     for (unsigned short i = 0U; i < cMAX_LANE_COUNT; ++i)
     {
-        LaneConfiguration laneConfig = {i + 1U, std::string(), 50501U + i};
+        LaneConfiguration laneConfig = {i + 1U, std::string(), static_cast<short unsigned>(50501U + i)};
         currentConfiguration.m_downstreamConfigurations.push_back(laneConfig);
         laneConfig.m_ipAddress = sLocalHost;
         currentConfiguration.m_upstreamConfigurations.push_back(laneConfig);

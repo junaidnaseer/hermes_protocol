@@ -14,7 +14,7 @@ using HermesDataTypes = boost::mpl::vector<
     Hermes::SetConfigurationData,
     Hermes::CurrentConfigurationData,
     Hermes::ConnectionInfo,
-    Hermes::ServiceDescription,
+    Hermes::ServiceDescriptionData,
     Hermes::MachineReadyData,
     //Hermes::RevokeMachineReadyData,
     Hermes::BoardAvailableData,
@@ -53,7 +53,7 @@ BOOST_FUSION_ADAPT_STRUCT(Hermes::ConnectionInfo,
     m_address,
     m_port
 )
-BOOST_FUSION_ADAPT_STRUCT(Hermes::ServiceDescription,
+BOOST_FUSION_ADAPT_STRUCT(Hermes::ServiceDescriptionData,
     m_laneId,
     m_machineId,
     m_version

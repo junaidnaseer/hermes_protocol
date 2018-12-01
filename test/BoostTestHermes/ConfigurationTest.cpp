@@ -23,6 +23,7 @@ limitations under the License.
 
 #include <iostream>
 #include <mutex>
+#include <condition_variable>
 
 struct ConfigurationClient : Hermes::ITraceCallback
 {
@@ -153,7 +154,7 @@ BOOST_AUTO_TEST_CASE(SetHermesConfigurationTest)
     sentConfig.m_machineId = "TX_5";
 
     sentConfig.m_downstreamConfigurations.emplace_back(1U, 0); // on lane 1, take default port
-    sentConfig.m_downstreamConfigurations.emplace_back(2U, "localhost", 50101);
+    sentConfig.m_downstreamConfigurations.emplace_back(2U, /*"localhost", */ 50101);
 
     sentConfig.m_upstreamConfigurations.emplace_back(1U, "localhost", 50101);
     sentConfig.m_upstreamConfigurations.emplace_back(2U, "127.0.0.1", 50102);

@@ -3,9 +3,9 @@ PROGRAM = BoostTestHermes
 INCLUDEDIRS = -I. -I../../src/include
 
 
-LIBDIRS = -L/usr/lib -L../../Hermes/.libs
+LIBDIRS = -L/usr/lib -L../../src/Hermes/.libs
 
-LIBS = -lhermes -lpthread
+LIBS = -lhermes -lpthread -lboost_unit_test_framework -lpugixml -lboost_system
 
 CXXSOURCES = CApiTest.cpp ConfigurationTest.cpp DownstreamTest.cpp HermesDataTest.cpp SerializerTest.cpp TestMain.cpp Trace.cpp UpstreamTest.cpp
 

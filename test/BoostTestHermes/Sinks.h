@@ -45,7 +45,7 @@ namespace Hermes
         unsigned m_sessionId{0U};
         EState m_state{EState::eNOT_CONNECTED};
         ConnectionInfo m_connectionInfo;
-        ServiceDescription m_serviceDescription;
+        ServiceDescriptionData m_serviceDescription;
         MachineReadyData m_machineReadyData;
         StartTransportData m_startTransportData;
         StopTransportData m_stopTransportData;
@@ -59,7 +59,7 @@ namespace Hermes
             m_connectionInfo = connectionInfo;
         }
 
-        void On(unsigned sessionId, EState state, const Hermes::ServiceDescription& serviceDescription) override
+        void On(unsigned sessionId, EState state, const Hermes::ServiceDescriptionData& serviceDescription) override
         {
             ChangeLock lock(this);
             m_state = state;
@@ -136,7 +136,7 @@ namespace Hermes
         unsigned m_sessionId{0U};
         EState m_state{EState::eNOT_CONNECTED};
         ConnectionInfo m_connectionInfo;
-        ServiceDescription m_serviceDescription;
+        ServiceDescriptionData m_serviceDescription;
         BoardAvailableData m_boardAvailableData;
         TransportFinishedData m_transportFinishedData;
         NotificationData m_notificationData;
@@ -149,7 +149,7 @@ namespace Hermes
             m_connectionInfo = connectionInfo;
         }
 
-        void On(unsigned sessionId, EState state, const Hermes::ServiceDescription& serviceDescription) override
+        void On(unsigned sessionId, EState state, const Hermes::ServiceDescriptionData& serviceDescription) override
         {
             ChangeLock lock(this);
             m_state = state;

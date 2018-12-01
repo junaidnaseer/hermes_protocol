@@ -255,6 +255,45 @@ namespace Hermes
     inline HermesGetConfigurationData ToC(const GetConfigurationData&) { return{}; }
     inline GetConfigurationData ToCpp(const HermesGetConfigurationData&) { return{}; }
 
+    // UpstreamConfiguration and Downstream configuration
+    inline HermesDownstreamConfiguration ToC(const DownstreamConfiguration& data)
+    {
+    	HermesDownstreamConfiguration result;
+    	CppToC(data.m_downstreamLaneId, result.m_downstreamLaneId);
+    	CppToC(data.m_optionalDownstreamInterfaceId, result.m_optionalDownstreamInterfaceId);
+    	CppToC(data.m_optionalClientAddress, result.m_optionalClientAddress);
+    	CppToC(data.m_port, result.m_port);
+    	return result;
+    }
+    inline DownstreamConfiguration ToCpp(const HermesDownstreamConfiguration& data)
+    {
+    	DownstreamConfiguration result;
+    	CToCpp(data.m_downstreamLaneId, result.m_downstreamLaneId);
+    	CToCpp(data.m_optionalDownstreamInterfaceId, result.m_optionalDownstreamInterfaceId);
+    	CToCpp(data.m_optionalClientAddress, result.m_optionalClientAddress);
+    	CToCpp(data.m_port, result.m_port);
+    	return result;
+    }
+
+    inline HermesUpstreamConfiguration ToC(const UpstreamConfiguration& data)
+    {
+    	HermesUpstreamConfiguration result;
+        CppToC(data.m_upstreamLaneId, result.m_upstreamLaneId);
+        CppToC(data.m_optionalUpstreamInterfaceId, result.m_optionalUpstreamInterfaceId);
+        CppToC(data.m_hostAddress, result.m_hostAddress);
+        CppToC(data.m_port, result.m_port);
+        return result;
+    }
+    inline UpstreamConfiguration ToCpp(const HermesUpstreamConfiguration& data)
+    {
+    	UpstreamConfiguration result;
+        CToCpp(data.m_upstreamLaneId, result.m_upstreamLaneId);
+        CToCpp(data.m_optionalUpstreamInterfaceId, result.m_optionalUpstreamInterfaceId);
+        CToCpp(data.m_port, result.m_port);
+        CToCpp(data.m_hostAddress, result.m_hostAddress);
+        return result;
+    }
+
     // CurrentConfigurationData
     class CurrentConfigurationDataHolder
     {

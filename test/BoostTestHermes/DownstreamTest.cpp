@@ -64,9 +64,9 @@ BOOST_AUTO_TEST_CASE(DownstreamTest)
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSOCKET_CONNECTED; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eSOCKET_CONNECTED; });
-        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescription(downstreamMachineId, 1U));
+        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescriptionData(downstreamMachineId, 1U));
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSERVICE_DESCRIPTION_DOWNSTREAM; });
-        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescription(upstreamMachineId, 1U));
+        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescriptionData(upstreamMachineId, 1U));
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
@@ -81,9 +81,9 @@ BOOST_AUTO_TEST_CASE(DownstreamTest)
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSOCKET_CONNECTED; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eSOCKET_CONNECTED; });
-        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescription(downstreamMachineId, 1U));
+        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescriptionData(downstreamMachineId, 1U));
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSERVICE_DESCRIPTION_DOWNSTREAM; });
-        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescription(upstreamMachineId, 1U));
+        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescriptionData(upstreamMachineId, 1U));
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
@@ -127,9 +127,9 @@ BOOST_AUTO_TEST_CASE(DownstreamTest)
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSOCKET_CONNECTED; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eSOCKET_CONNECTED; });
-        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescription(downstreamMachineId, 1U));
+        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescriptionData(downstreamMachineId, 1U));
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSERVICE_DESCRIPTION_DOWNSTREAM; });
-        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescription(upstreamMachineId, 1U));
+        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescriptionData(upstreamMachineId, 1U));
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
@@ -140,9 +140,9 @@ BOOST_AUTO_TEST_CASE(DownstreamTest)
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSOCKET_CONNECTED; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eSOCKET_CONNECTED; });
-        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescription(downstreamMachineId, 1U));
+        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescriptionData(downstreamMachineId, 1U));
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSERVICE_DESCRIPTION_DOWNSTREAM; });
-        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescription(upstreamMachineId, 1U));
+        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescriptionData(upstreamMachineId, 1U));
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY && downstreamSink.m_sessionId == downstreamSessionId; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY && upstreamSink.m_sessionId == upstreamSessionId; });
@@ -153,9 +153,9 @@ BOOST_AUTO_TEST_CASE(DownstreamTest)
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSOCKET_CONNECTED; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eSOCKET_CONNECTED; });
-        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescription(downstreamMachineId, 1U));
+        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescriptionData(downstreamMachineId, 1U));
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSERVICE_DESCRIPTION_DOWNSTREAM; });
-        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescription(upstreamMachineId, 1U));
+        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescriptionData(upstreamMachineId, 1U));
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY && downstreamSink.m_sessionId == downstreamSessionId; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY && upstreamSink.m_sessionId == upstreamSessionId; });
@@ -188,9 +188,9 @@ BOOST_AUTO_TEST_CASE(DownstreamAllowedHostTest)
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSOCKET_CONNECTED; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eSOCKET_CONNECTED; });
-        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescription(downstreamMachineId, 1U));
+        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescriptionData(downstreamMachineId, 1U));
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSERVICE_DESCRIPTION_DOWNSTREAM; });
-        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescription(upstreamMachineId, 1U));
+        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescriptionData(upstreamMachineId, 1U));
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
@@ -222,14 +222,14 @@ BOOST_AUTO_TEST_CASE(DownstreamHostNotAlloweHostTest)
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eNOT_CONNECTED; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eDISCONNECTED; });
 
-        downstreamConfig.m_optionalClientAddress.clear(); // should now accept anything
+        downstreamConfig.m_optionalClientAddress.reset(); // clear(); // should now accept anything
         downstream.Enable(downstreamConfig);
 
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSOCKET_CONNECTED; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eSOCKET_CONNECTED; });
-        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescription(downstreamMachineId, 1U));
+        upstream.Signal(upstreamSink.m_sessionId, Hermes::ServiceDescriptionData(downstreamMachineId, 1U));
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eSERVICE_DESCRIPTION_DOWNSTREAM; });
-        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescription(upstreamMachineId, 1U));
+        downstream.Signal(downstreamSink.m_sessionId, Hermes::ServiceDescriptionData(upstreamMachineId, 1U));
         WaitFor(downstreamSink, [&]() { return downstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
         WaitFor(upstreamSink, [&]() { return upstreamSink.m_state == EState::eNOT_AVAILABLE_NOT_READY; });
     }

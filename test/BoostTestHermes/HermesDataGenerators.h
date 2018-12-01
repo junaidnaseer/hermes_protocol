@@ -2,6 +2,7 @@
 #pragma once
 
 #include <HermesData.hpp>
+#include <HermesData.h>
 
 #include "HermesDataReflection.h"
 
@@ -135,36 +136,39 @@ struct MemberTraits<MemberT ClassT::*>
     using Member = MemberT;
 };
 
-//inline std::vector<Hermes::ServiceDescription> GenerateNonDefaultServiceDescription()
-//{
-//    std::vector<Hermes::ServiceDescription> result;
-//    AddNonDefaultSamples<Hermes::ServiceDescription, std::string, &Hermes::ServiceDescription::m_machineId>(result);
-//        
-//    return result;
-//}
-//
-//inline std::vector<Hermes::MachineReadyData> GenerateNonDefaultMachineReadyData()
-//{
-//    std::vector<Hermes::MachineReadyData> result;
-//    AddNonDefaultSamples<Hermes::MachineReadyData, Hermes::EBoardQuality, &Hermes::MachineReadyData::m_boardQuality>(result);
-//    return result;
-//}
+/*
+inline std::vector<Hermes::ServiceDescription> GenerateNonDefaultServiceDescription()
+{
+    std::vector<Hermes::ServiceDescription> result;
+    AddNonDefaultSamples<Hermes::ServiceDescription, std::string, &Hermes::ServiceDescription::m_machineId>(result);
 
-//#define HERMES_TEST_ADD_NON_DEFAULT_SAMPLES(samples, member) \
-//AddNonDefaultSamples<MemberTraits<decltype(member)>::Class, MemberTraits<decltype(member)>::Member, member>(samples)
-//
-//void AddAllNonDefaultSamples(std::vector<Hermes::MachineReadyData>& samples)
-//{
-//    HERMES_TEST_ADD_NON_DEFAULT_SAMPLES(samples, &Hermes::MachineReadyData::m_boardQuality);
-//}
-//
-//void AddAllNonDefaultSamples(std::vector<Hermes::ServiceDescription>& samples)
-//{
-//    HERMES_TEST_ADD_NON_DEFAULT_SAMPLES(samples, &Hermes::ServiceDescription::m_laneId);
-//    HERMES_TEST_ADD_NON_DEFAULT_SAMPLES(samples, &Hermes::ServiceDescription::m_machineId);
-//}
+    return result;
+}
 
-//HERMES_ADD_SAMPLES(Hermes::MachineReadyData, (m_boardQuality))
+inline std::vector<Hermes::MachineReadyData> GenerateNonDefaultMachineReadyData()
+{
+    std::vector<Hermes::MachineReadyData> result;
+    AddNonDefaultSamples<Hermes::MachineReadyData, Hermes::EBoardQuality, &Hermes::MachineReadyData::m_boardQuality>(result);
+    return result;
+}
+
+#define HERMES_TEST_ADD_NON_DEFAULT_SAMPLES(samples, member) \
+AddNonDefaultSamples<MemberTraits<decltype(member)>::Class, MemberTraits<decltype(member)>::Member, member>(samples)
+
+void AddAllNonDefaultSamples(std::vector<Hermes::MachineReadyData>& samples)
+{
+    HERMES_TEST_ADD_NON_DEFAULT_SAMPLES(samples, &Hermes::MachineReadyData::m_boardQuality);
+}
+
+void AddAllNonDefaultSamples(std::vector<Hermes::ServiceDescription>& samples)
+{
+    HERMES_TEST_ADD_NON_DEFAULT_SAMPLES(samples, &Hermes::ServiceDescription::m_laneId);
+    HERMES_TEST_ADD_NON_DEFAULT_SAMPLES(samples, &Hermes::ServiceDescription::m_machineId);
+}
+
+HERMES_ADD_SAMPLES(Hermes::MachineReadyData, (m_boardQuality))
+*/
+
 template<class T>
 std::vector<T> GenerateNonDefaultSamples()
 {

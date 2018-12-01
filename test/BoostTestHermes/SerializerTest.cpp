@@ -3,6 +3,7 @@
 
 #include <HermesData.hpp>
 #include <HermesSerialization.hpp>
+#include <HermesStringView.hpp>
 
 #include "HermesDataGenerators.h"
 
@@ -17,7 +18,7 @@ using EmptyHermesDataTypes = boost::mpl::vector<
     Hermes::GetConfigurationData>;
 
 using NonEmptyHermesDataTypes = boost::mpl::vector<
-    Hermes::ServiceDescription,
+    Hermes::ServiceDescriptionData,
     Hermes::NotificationData,
     Hermes::BoardAvailableData,
     Hermes::MachineReadyData,
@@ -32,7 +33,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestEmptyHermesDataTypes, DataT, EmptyHermesDataTy
 {
     DataT data;
     std::string xml = ToXml(data);
-    auto optionalData = Hermes::ToOptionalData<DataT>(xml);
+    Hermes::StringView svxml(xml);
+    Hermes::Optional<DataT> optionalData = Hermes::FromXml<DataT>(svxml);
     BOOST_CHECK(optionalData);
     if (optionalData)
     {
@@ -46,7 +48,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestNonEmptyHermesDataTypes, DataT, NonEmptyHermes
     for (const auto& data : samples)
     {
         std::string xml = ToXml(data);
-        auto optionalData = Hermes::ToOptionalData<DataT>(xml);
+        Hermes::StringView svxml(xml);
+        Hermes::Optional<DataT> optionalData = Hermes::FromXml<DataT>(svxml);
         BOOST_CHECK(optionalData);
         if (optionalData)
         {

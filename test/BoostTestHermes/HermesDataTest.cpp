@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(HermesCApiTest, T, HermesDataTypes)
 
     for (const auto& sample: samples)
     {
-        auto apiData = ToC(sample);
+        auto apiData = Hermes::ToC(sample);
         auto roundTrippedSample = Hermes::ToCpp(*(&apiData));
         BOOST_TEST(sample == roundTrippedSample);
         BOOST_TEST(!(sample != roundTrippedSample));
